@@ -12,16 +12,16 @@ bitwiseR =  cv.bitwise_and(bitwiseGR, r) # removes where it is both red and gree
 bitwiseGB = cv.bitwise_xor(g, b) # gets where there it is both blue and green and marks it false
 bitwiseB =  cv.bitwise_and(bitwiseGB, b) # removes where it is both blue and green and keeps blue only
 
-thres, bitwiseR = cv.threshold(bitwiseR, 70, 255, cv.THRESH_BINARY) #use threshold so the area with balls are very clearly white
-thres, bitwiseB = cv.threshold(bitwiseB, 70, 255, cv.THRESH_BINARY)
+thres, bitwiseR = cv.threshold(bitwiseR, 65, 255, cv.THRESH_BINARY) #use threshold so the area with balls are very clearly white
+thres, bitwiseB = cv.threshold(bitwiseB, 20, 255, cv.THRESH_BINARY)
 
 #could still detect purple at this point
 bitwiseBR = cv.bitwise_xor(r, b) # gets where there it is both red and blue and marks it false
 bitwiseR = cv.bitwise_and(bitwiseBR, bitwiseR) # removes where it is both red and blue and keeps red or blue respectively
 bitwiseB = cv.bitwise_and(bitwiseBR, bitwiseB)
 
-thres, thresholdRed = cv.threshold(bitwiseR, 70, 255, cv.THRESH_BINARY) #use threshold so the area with balls are very clearly white
-thres, thresholdBlue = cv.threshold(bitwiseB, 70, 255, cv.THRESH_BINARY)
+thres, thresholdRed = cv.threshold(bitwiseR, 65, 255, cv.THRESH_BINARY) #use threshold so the area with balls are very clearly white
+thres, thresholdBlue = cv.threshold(bitwiseB, 20, 255, cv.THRESH_BINARY)
 
 blurRed = cv.GaussianBlur(thresholdRed, (51, 51), 0) #use a lot of blur so any areas with even a little bit of gray go black
 thres, blurRed = cv.threshold(blurRed, 230, 255, cv.THRESH_BINARY)
@@ -33,8 +33,13 @@ contoursRed, hierarchy = cv.findContours(blurRed, cv.RETR_TREE, cv.CHAIN_APPROX_
 
 contoursBlue, hierarchy = cv.findContours(blurBlue, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 
+blank = np.zeros(img.shape[:2], 'uint8')
+
+mask = cv.merge([blurBlue, blank, blurRed])
+cv.imshow('Mask', mask)
+
 for index, contour in enumerate(contoursRed): #some small contours may still be found, so it filters using area
-    if cv.contourArea(contour) > 3000:
+    if cv.contourArea(contour) > 15000:
         x, y, w, h = cv.boundingRect(contour)
         cv.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 2) #if it passes area check, it draws it
         M = cv.moments(contour)
@@ -43,7 +48,8 @@ for index, contour in enumerate(contoursRed): #some small contours may still be 
         cv.putText(img, 'Red Ball', (x, y), cv.FONT_HERSHEY_TRIPLEX, 1, (255, 255, 255), 2)
 
 for index, contour in enumerate(contoursBlue): #same as red
-    if cv.contourArea(contour) > 3000:
+    if cv.contourArea(contour) > 15000:
+        print(cv.contourArea(contour))
         x, y, w, h = cv.boundingRect(contour)
         cv.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 2)
         M = cv.moments(contour)
